@@ -1,36 +1,53 @@
-# This is a basic workflow to help you get started with Actions
+name: Build and Distribute Debug IPA (iOS)
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "staging" ]  # stagingブランチへのpush時に実行
+  workflow_dispatch:         # 手動実行も可能
+    inputs:
+      tester_group:
+        description: 'Firebase tester group'
+        required: false
+        default: 'Clapp'
+        type: choice
+        options:
+          - 'Clapp'
+      release_notes:
+        description: 'Release notes'
+        required: false
+        default: '動作確認用'
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+env:
+  XCODE_VERSION: '26.0.1'           # 使用するXcodeのバージョン
+  SCHEME: 'GithubActionTest'                 # Xcodeのビルド対象Scheme
+  WORKSPACE: 'GithubActionTest.xcworkspace'  # CocoaPods使用時のworkspace名
+  CONFIGURATION: 'Debug'          # Debugビルドを指定
+  EXPORT_METHOD: 'development'    # ipa出力方法(development / ad-hoc / app-storeなど)
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  distribute:
+    runs-on: macos-latest             # macOSランナー(Xcodeが使える環境)
+    timeout-minutes: 45
+    # environment: iOSDebug
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+    # ---------------------------------------------
+    # ① ソースコードをチェックアウト
+    # ---------------------------------------------
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+    # ---------------------------------------------
+    # ② Xcodeバージョンを指定
+    # ---------------------------------------------
+    - name: Set up Xcode
+      run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    # ---------------------------------------------
+    # ③ CocoaPods の依存ライブラリをインストール
+    # ---------------------------------------------
+    - name: Install dependencies (CocoaPods)
+      run: |
+        gem install cocoapods --no-document
+        pod repo update
+        pod install
