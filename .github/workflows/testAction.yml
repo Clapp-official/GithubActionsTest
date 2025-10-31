@@ -2,7 +2,7 @@ name: Build and Distribute Debug IPA (iOS)
 
 on:
   push:
-    branches: [ "staging" ]  # stagingブランチへのpush時に実行
+    branches: [ "develop", "staging" ]
   workflow_dispatch:         # 手動実行も可能
     inputs:
       tester_group:
@@ -13,6 +13,7 @@ on:
         options:
           - 'Clapp'
       release_notes:
+        
         description: 'Release notes'
         required: false
         default: '動作確認用'
