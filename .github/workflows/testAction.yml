@@ -19,8 +19,7 @@ on:
 
 env:
   XCODE_VERSION: '26.0.1'           # 使用するXcodeのバージョン
-  SCHEME: 'GithubActionTest'                 # Xcodeのビルド対象Scheme
-  WORKSPACE: 'GithubActionTest.xcworkspace'  # CocoaPods使用時のworkspace名
+  SCHEME: 'GithubActionTest'        # Xcodeのビルド対象Scheme
   CONFIGURATION: 'Debug'          # Debugビルドを指定
   EXPORT_METHOD: 'development'    # ipa出力方法(development / ad-hoc / app-storeなど)
 
@@ -44,10 +43,13 @@ jobs:
       run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
     # ---------------------------------------------
-    # ③ CocoaPods の依存ライブラリをインストール
+    # ③ ライブラリをインストール
     # ---------------------------------------------
-    - name: Install dependencies (CocoaPods)
-      run: |
-        gem install cocoapods --no-document
-        pod repo update
-        pod install
+    - name: Resolve Swift Packages
+        run: xcodebuild -resolvePackageDependencies -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug
+
+    # ---------------------------------------------
+    # ④ ビルド
+    # ---------------------------------------------
+    - name: Build app
+        run: xcodebuild -project MyApp.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=26.0'
