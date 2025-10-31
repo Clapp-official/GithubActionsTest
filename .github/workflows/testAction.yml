@@ -52,4 +52,4 @@ jobs:
     # ④ ビルド
     # ---------------------------------------------
     - name: Build app
-      run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0'
+      run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0.1'
