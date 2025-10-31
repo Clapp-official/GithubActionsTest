@@ -19,7 +19,7 @@ on:
 
 env:
   XCODE_VERSION: '26.0.1'           # 使用するXcodeのバージョン
-  SCHEME: 'GithubActionTest'        # Xcodeのビルド対象Scheme
+  SCHEME: 'GithubActionsTest'        # Xcodeのビルド対象Scheme
   CONFIGURATION: 'Debug'          # Debugビルドを指定
   EXPORT_METHOD: 'development'    # ipa出力方法(development / ad-hoc / app-storeなど)
 
