@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8D1A584A2EB9B78200AFA515 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 8D1A58492EB9B78200AFA515 /* Alamofire */; };
+		8D1A584C2EB9B78200AFA515 /* AlamofireDynamic in Frameworks */ = {isa = PBXBuildFile; productRef = 8D1A584B2EB9B78200AFA515 /* AlamofireDynamic */; };
+		8D1A584F2EB9B78F00AFA515 /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8D1A584E2EB9B78F00AFA515 /* SDWebImage */; };
+		8D1A58512EB9B78F00AFA515 /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8D1A58502EB9B78F00AFA515 /* SDWebImageMapKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		8D1A582E2EB4B5FC00AFA515 /* GithubActionsTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GithubActionsTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +30,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D1A584F2EB9B78F00AFA515 /* SDWebImage in Frameworks */,
+				8D1A584A2EB9B78200AFA515 /* Alamofire in Frameworks */,
+				8D1A58512EB9B78F00AFA515 /* SDWebImageMapKit in Frameworks */,
+				8D1A584C2EB9B78200AFA515 /* AlamofireDynamic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +76,10 @@
 			);
 			name = GithubActionsTest;
 			packageProductDependencies = (
+				8D1A58492EB9B78200AFA515 /* Alamofire */,
+				8D1A584B2EB9B78200AFA515 /* AlamofireDynamic */,
+				8D1A584E2EB9B78F00AFA515 /* SDWebImage */,
+				8D1A58502EB9B78F00AFA515 /* SDWebImageMapKit */,
 			);
 			productName = GithubActionsTest;
 			productReference = 8D1A582E2EB4B5FC00AFA515 /* GithubActionsTest.app */;
@@ -94,6 +109,10 @@
 			);
 			mainGroup = 8D1A58252EB4B5FC00AFA515;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8D1A58482EB9B78200AFA515 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				8D1A584D2EB9B78F00AFA515 /* XCRemoteSwiftPackageReference "SDWebImage" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8D1A582F2EB4B5FC00AFA515 /* Products */;
 			projectDirPath = "";
@@ -349,6 +368,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8D1A58482EB9B78200AFA515 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+		8D1A584D2EB9B78F00AFA515 /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImage.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.21.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8D1A58492EB9B78200AFA515 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D1A58482EB9B78200AFA515 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		8D1A584B2EB9B78200AFA515 /* AlamofireDynamic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D1A58482EB9B78200AFA515 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = AlamofireDynamic;
+		};
+		8D1A584E2EB9B78F00AFA515 /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D1A584D2EB9B78F00AFA515 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		8D1A58502EB9B78F00AFA515 /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8D1A584D2EB9B78F00AFA515 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8D1A58262EB4B5FC00AFA515 /* Project object */;
 }
