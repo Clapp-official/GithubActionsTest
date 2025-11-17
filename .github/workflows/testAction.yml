@@ -2,7 +2,7 @@ name: Build and Distribute Debug IPA (iOS)
 
 on:
   push:
-    branches: [ "develop", "staging" ]
+    branches: ["staging" ]
   pull_request:
     branches: [ "develop", "staging" ]
   workflow_dispatch:         # 手動実行も可能
