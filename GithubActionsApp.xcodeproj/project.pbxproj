@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,7 +19,7 @@
 		535016F8AD0BEAC6E99C3964 /* GithubActionsApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GithubActionsApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACA372B9DCD76A7C0814269F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B6E155708543666B205972B4 /* GithubActionsTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GithubActionsTestApp.swift; sourceTree = "<group>"; };
-		B9B4BA8A3FD4FA28E86BEC8A /* MyLibrary */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MyLibrary; path = MyLibrary; sourceTree = SOURCE_ROOT; };
+		B9B4BA8A3FD4FA28E86BEC8A /* MyLibrary */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MyLibrary; sourceTree = SOURCE_ROOT; };
 		C23BA7BA6392D99DFCEDA2C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -119,7 +119,6 @@
 				5254145BC553A037146C6AC7 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				11D9C5896F9D7A2F49861B11 /* XCLocalSwiftPackageReference "MyLibrary" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
