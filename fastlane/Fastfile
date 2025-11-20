@@ -105,105 +105,104 @@ platform :ios do
     puts_line(:purple)
     puts "\n\n"
   end
-end
 
-desc "Determine new version"
-lane :get_new_version do |options|
-  # 新バージョンを決める
-  current_version = get_version_number
-  if !options[:version].nil? && !options[:version].empty?
-    new_version = options[:version]
-  else
-    new_version = current_version
+  desc "Determine new version"
+  lane :get_new_version do |options|
+    # 新バージョンを決める
+    current_version = get_version_number
+    if !options[:version].nil? && !options[:version].empty?
+      new_version = options[:version]
+    else
+      new_version = current_version
+    end
+
+    return new_version
   end
 
-  return new_version
-end
+  desc "Determine new build number"
+  lane :get_new_build_number do |options|
+    # 今日の日付を取得 (形式: YYYYMMDD)
+    today_date = Time.now.strftime("%Y%m%d")
+    # 新ビルド番号を決める
+    build_suffix_number = options[:build_suffix] || "0"
+    latest_release = firebase_app_distribution_get_latest_release(
+      app: FIREBASE_APP_ID,
+      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
+      debug: true,
+    )
+    latest_release_build_number = latest_release[:buildVersion]
+    latest_release_date = latest_release_build_number[0..7] # 日付部分
+    latest_release_build_suffix_number = latest_release_build_number[8..-1] # 日付部分を除いた数字を取得
+    if latest_release_date == today_date
+      build_suffix_number = latest_release_build_suffix_number.to_i + 1
+    end
+    new_build_number = options[:build] || "#{today_date}#{build_suffix_number}"
 
-desc "Determine new build number"
-lane :get_new_build_number do |options|
-  # 今日の日付を取得 (形式: YYYYMMDD)
-  today_date = Time.now.strftime("%Y%m%d")
-  # 新ビルド番号を決める
-  build_suffix_number = options[:build_suffix] || "0"
-  latest_release = firebase_app_distribution_get_latest_release(
-    app: FIREBASE_APP_ID,
-    service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
-    debug: true,
-  )
-  latest_release_build_number = latest_release[:buildVersion]
-  latest_release_date = latest_release_build_number[0..7] # 日付部分
-  latest_release_build_suffix_number = latest_release_build_number[8..-1] # 日付部分を除いた数字を取得
-  if latest_release_date == today_date
-    build_suffix_number = latest_release_build_suffix_number.to_i + 1
-  end
-  new_build_number = options[:build] || "#{today_date}#{build_suffix_number}"
-
-  return new_build_number
-end
-
-desc "Distribute to Firebase App Distribution"
-lane :update_version_pr do |options|
-  import_certificates_and_provisioning_profile
-  new_version = new_version(options: options)
-  new_build_number = new_build_number(options: options)
-
-  # 現在チェックアウト中のブランチ名を保持
-  current_branche_name = (sh "git branch --show-current").strip
-
-  # アップデート用ブランチ作成、チェックアウト
-  new_branch_name = "feature/update-version-#{new_version}_#{new_build_number}"
-  check_exist_brance_result = sh "git branch --list #{new_branch_name}"
-  is_exist_brance = !check_exist_brance_result.nil? && !check_exist_brance_result.empty?
-  if is_exist_brance
-    sh "git switch #{new_branch_name}"
-    branch_action_title = "ブランチチェックアウト完了"
-  else
-    sh "git switch -c #{new_branch_name}"
-    branch_action_title = "ブランチ作成、チェックアウト完了"
+    return new_build_number
   end
 
-  puts "\n\n"
-  puts_title("#{branch_action_title}", :purple)
-  puts "Checkout #{colored(new_branch_name, :green)}"
-  puts_line(:purple)
-  puts "\n\n"
+  desc "Distribute to Firebase App Distribution"
+  lane :update_version_pr do |options|
+    import_certificates_and_provisioning_profile
+    new_version = new_version(options: options)
+    new_build_number = new_build_number(options: options)
 
-  # バージョン設定
-  increment_version_number(version_number: new_version)
+    # 現在チェックアウト中のブランチ名を保持
+    current_branche_name = (sh "git branch --show-current").strip
 
-  # ビルド番号設定
-  increment_build_number(build_number: new_build_number)
+    # アップデート用ブランチ作成、チェックアウト
+    new_branch_name = "feature/update-version-#{new_version}_#{new_build_number}"
+    check_exist_brance_result = sh "git branch --list #{new_branch_name}"
+    is_exist_brance = !check_exist_brance_result.nil? && !check_exist_brance_result.empty?
+    if is_exist_brance
+      sh "git switch #{new_branch_name}"
+      branch_action_title = "ブランチチェックアウト完了"
+    else
+      sh "git switch -c #{new_branch_name}"
+      branch_action_title = "ブランチ作成、チェックアウト完了"
+    end
 
-  puts "\n\n"
-  puts_title("バージョン/ビルド番号変更完了", :purple)
-  puts "Version: #{colored(new_version, :green)}"
-  puts "Build number: #{colored(new_build_number, :green)}"
-  puts_line(:purple)
-  puts "\n\n"
+    puts "\n\n"
+    puts_title("#{branch_action_title}", :purple)
+    puts "Checkout #{colored(new_branch_name, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
 
-  # PR作成
-  pr_title = "バージョン#{new_version}_#{new_build_number}にアップデート"
-  # 変更があるかを確認
-  if sh("git status --porcelain #{VERSION_MANAGER_FIEL_PATH}").empty?
-    UI.message("No changes to commit.")
-  else
-    # 変更があればコミット
-    sh "git add #{VERSION_MANAGER_FIEL_PATH}"
-    sh("git commit -m '#{pr_title} (by Fastlane)'")
+    # バージョン設定
+    increment_version_number(version_number: new_version)
+
+    # ビルド番号設定
+    increment_build_number(build_number: new_build_number)
+
+    puts "\n\n"
+    puts_title("バージョン/ビルド番号変更完了", :purple)
+    puts "Version: #{colored(new_version, :green)}"
+    puts "Build number: #{colored(new_build_number, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+
+    # PR作成
+    pr_title = "バージョン#{new_version}_#{new_build_number}にアップデート"
+    # 変更があるかを確認
+    if sh("git status --porcelain #{VERSION_MANAGER_FIEL_PATH}").empty?
+      UI.message("No changes to commit.")
+    else
+      # 変更があればコミット
+      sh "git add #{VERSION_MANAGER_FIEL_PATH}"
+      sh("git commit -m '#{pr_title} (by Fastlane)'")
+    end
+    sh "git push origin #{new_branch_name}"
+
+    # PR作成
+    sh "gh pr create --title '#{pr_title}' --body 'Update version by Fastlane' --base #{current_branche_name} --head #{new_branch_name} --assignee @me"
+
+    puts "\n\n"
+    puts_title("PR作成完了", :purple)
+    puts "Merge commits into #{colored("origin/#{current_branche_name}", :green)} from #{colored(new_branch_name, :green)}"
+    puts "title: #{colored(pr_title, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
   end
-  sh "git push origin #{new_branch_name}"
-
-  # PR作成
-  sh "gh pr create --title '#{pr_title}' --body 'Update version by Fastlane' --base #{current_branche_name} --head #{new_branch_name} --assignee @me"
-
-  puts "\n\n"
-  puts_title("PR作成完了", :purple)
-  puts "Merge commits into #{colored("origin/#{current_branche_name}", :green)} from #{colored(new_branch_name, :green)}"
-  puts "title: #{colored(pr_title, :green)}"
-  puts_line(:purple)
-  puts "\n\n"
-end
 
 # カスタムメソッド ---------------------
 def colored(text, color)
