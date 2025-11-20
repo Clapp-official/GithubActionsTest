@@ -58,11 +58,6 @@ jobs:
         echo "${{ secrets.PROVISIONING_PROFILE }}" > provisioning_profile.mobileprovision.txt
         base64 --decode -i provisioning_profile.mobileprovision.txt -o provisioning_profile.mobileprovision
 
-    # - name: Debug Firebase JSON
-    #   run: |
-    #     echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > test.json
-    #     cat test.json
-
     # - name: Decode Firebase Service Account
     #   run: |
     #     echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase_service_account.json.txt
@@ -123,7 +118,7 @@ jobs:
       env:
         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        FIREBASE_SERVICE_ACCOUNT_FILE_PATH: firebase_service_account.json
+        FIREBASE_SERVICE_ACCOUNT_FILE_PATH: ${{ env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH }}
         FASTLANE_OPT_OUT_USAGE: "YES"   # エラーを減らす
         FASTLANE_VERBOSE: "true"
       run: |
