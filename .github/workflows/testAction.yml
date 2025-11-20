@@ -60,7 +60,8 @@ jobs:
 
     - name: Decode Firebase Service Account
       run: |
-        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' | base64 --decode > firebase_service_account.json
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase_service_account.json.txt
+        base64 --decode -i firebase_service_account.json.txt -o firebase_service_account.json
 
     # ---------------------------------------------
     # キャッシュする
