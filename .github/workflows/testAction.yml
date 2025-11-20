@@ -48,7 +48,7 @@ jobs:
     - name: Bundle Install
       run: bundle install
 
-    - name: Keychain.p12
+    - name: distribution.p12
       run: |
         echo "${{ secrets.DISTRIBUTION_CERTIFICATE }}" > distribution.p12.txt
         base64 --decode -i distribution.p12.txt -o distribution.p12
@@ -57,6 +57,11 @@ jobs:
       run: |
         echo "${{ secrets.PROVISIONING_PROFILE }}" > provisioning_profile.mobileprovision.txt
         base64 --decode -i provisioning_profile.mobileprovision.txt -o provisioning_profile.mobileprovision
+
+    - name: Debug Firebase JSON
+      run: |
+        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > test.json
+        cat test.json
 
     - name: Decode Firebase Service Account
       run: |
