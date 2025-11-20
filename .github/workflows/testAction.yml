@@ -58,30 +58,30 @@ jobs:
         echo "${{ secrets.PROVISIONING_PROFILE }}" > provisioning_profile.mobileprovision.txt
         base64 --decode -i provisioning_profile.mobileprovision.txt -o provisioning_profile.mobileprovision
 
-    # - name: Decode Firebase Service Account
-    #   run: |
-    #     echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase_service_account.json.txt
-    #     base64 --decode -i firebase_service_account.json.txt -o firebase_service_account.json
-
-    - name: Create Firebase service account key
+    - name: Decode Firebase Service Account
       run: |
-        # Try base64 decode first, fallback to direct JSON
-        CLEAN_SECRET=$(echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | tr -d '%' | tr -d '\n' | tr -d ' ')
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase_service_account.json.txt
+        base64 --decode -i firebase_service_account.json.txt -o firebase_service_account.json
+
+    # - name: Create Firebase service account key
+    #   run: |
+    #     # Try base64 decode first, fallback to direct JSON
+    #     CLEAN_SECRET=$(echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | tr -d '%' | tr -d '\n' | tr -d ' ')
         
-        if echo "$CLEAN_SECRET" | base64 -d > firebase-service-account.json 2>/dev/null; then
-          echo "✅ Base64 decoded Firebase key"
-        else
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > firebase-service-account.json
-          echo "✅ Using direct JSON Firebase key"
-        fi
+    #     if echo "$CLEAN_SECRET" | base64 -d > firebase-service-account.json 2>/dev/null; then
+    #       echo "✅ Base64 decoded Firebase key"
+    #     else
+    #       echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > firebase-service-account.json
+    #       echo "✅ Using direct JSON Firebase key"
+    #     fi
         
-        # Verify JSON is valid
-        if ! jq empty firebase-service-account.json 2>/dev/null; then
-          echo "❌ Invalid Firebase JSON"
-          exit 1
-        fi
+    #     # Verify JSON is valid
+    #     if ! jq empty firebase-service-account.json 2>/dev/null; then
+    #       echo "❌ Invalid Firebase JSON"
+    #       exit 1
+    #     fi
         
-        echo "FIREBASE_SERVICE_ACCOUNT_KEY_PATH=$PWD/firebase-service-account.json" >> $GITHUB_ENV
+    #     echo "FIREBASE_SERVICE_ACCOUNT_KEY_PATH=$PWD/firebase-service-account.json" >> $GITHUB_ENV
 
     # ---------------------------------------------
     # キャッシュする
@@ -118,7 +118,7 @@ jobs:
       env:
         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        FIREBASE_SERVICE_ACCOUNT_FILE_PATH: ${{ env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH }}
+        FIREBASE_SERVICE_ACCOUNT_FILE_PATH: "./firebase_service_account.json"
         FASTLANE_OPT_OUT_USAGE: "YES"   # エラーを減らす
         FASTLANE_VERBOSE: "true"
       run: |
