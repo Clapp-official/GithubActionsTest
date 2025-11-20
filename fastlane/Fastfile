@@ -54,8 +54,8 @@ platform :ios do
   desc "Distribute to Firebase App Distribution"
   lane :firebase do |options|
     import_certificates_and_provisioning_profile
-    new_version = new_version
-    new_build_number = new_build_number
+    new_version = new_version(options: options)
+    new_build_number = new_build_number(options: options)
     # バージョン設定
     increment_version_number(version_number: new_version)
     # ビルド番号設定
@@ -145,8 +145,8 @@ end
 desc "Distribute to Firebase App Distribution"
 lane :update_version_pr do |options|
   import_certificates_and_provisioning_profile
-  new_version = new_version
-  new_build_number = new_build_number
+  new_version = new_version(options: options)
+  new_build_number = new_build_number(options: options)
 
   # 現在チェックアウト中のブランチ名を保持
   current_branche_name = (sh "git branch --show-current").strip
