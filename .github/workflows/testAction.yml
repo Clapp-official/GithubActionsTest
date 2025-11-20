@@ -99,4 +99,4 @@ jobs:
         CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
         FIREBASE_SERVICE_ACCOUNT_FILE_NAME: firebase_service_account.json
       run: |
-        bundle exec fastlane firebase
+        bundle exec fastlane firebase --capture_output=false
