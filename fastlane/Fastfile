@@ -116,7 +116,7 @@ platform :ios do
       new_version = current_version
     end
 
-    return new_version
+    new_version
   end
 
   desc "Determine new build number"
@@ -138,7 +138,7 @@ platform :ios do
     end
     new_build_number = options[:build] || "#{today_date}#{build_suffix_number}"
 
-    return new_build_number
+    new_build_number
   end
 
   desc "Distribute to Firebase App Distribution"
