@@ -13,6 +13,41 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 # Available Actions
 
+### test
+
+```sh
+[bundle exec] fastlane test
+```
+
+
+
+### new_version
+
+```sh
+[bundle exec] fastlane new_version
+```
+
+Determine new version
+
+### new_build_number
+
+```sh
+[bundle exec] fastlane new_build_number
+```
+
+Determine new build number
+
+### update_version_pr
+
+```sh
+[bundle exec] fastlane update_version_pr
+```
+
+Distribute to Firebase App Distribution
+
+----
+
+
 ## iOS
 
 ### ios firebase
