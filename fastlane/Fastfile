@@ -23,7 +23,7 @@ end
 # アプリ関係
 VERSION_MANAGER_FIEL_PATH = "../GithubActionsApp.xcodeproj/project.pbxproj".freeze
 PROVISIONING_PROFILES_NAME = "GithubActionApp".freeze
-FIREBASE_SERVICE_ACCOUNT_FILE = ENV["FIREBASE_SERVICE_ACCOUNT"]
+FIREBASE_SERVICE_ACCOUNT_FILE_PATH = ENV["FIREBASE_SERVICE_ACCOUNT_FILE_PATH"]
 
 default_platform(:ios)
 
@@ -65,7 +65,7 @@ platform :ios do
     build_suffix_number = options[:build_suffix] || "0"
     latest_release = firebase_app_distribution_get_latest_release(
       app: FIREBASE_APP_ID,
-      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE,
+      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
     )
     latest_release_build_number = latest_release[:buildVersion]
     latest_release_date = latest_release_build_number[0..7] # 日付部分
@@ -156,7 +156,7 @@ platform :ios do
       app: FIREBASE_APP_ID,
       groups: testers,
       release_notes: release_notes,
-      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE,
+      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
     )
 
     puts "\n\n"
