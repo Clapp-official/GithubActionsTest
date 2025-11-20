@@ -68,6 +68,7 @@ platform :ios do
     latest_release = firebase_app_distribution_get_latest_release(
       app: FIREBASE_APP_ID,
       service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
+      debug: true,
     )
     latest_release_build_number = latest_release[:buildVersion]
     latest_release_date = latest_release_build_number[0..7] # 日付部分
