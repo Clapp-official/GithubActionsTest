@@ -1,0 +1,235 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+# Firebase関係
+FIREBASE_APP_ID = "1:257834029624:ios:f58bcc630fb3dc3c80cccd".freeze #ENV["FIREBASE_APP_ID"].freeze
+
+module FIREBASE_TESTER
+  Nakashima = "Nakashima".freeze
+end
+
+# アプリ関係
+VERSION_MANAGER_FIEL_PATH = "../GithubActionsApp.xcodeproj/project.pbxproj".freeze
+PROVISIONING_PROFILES_NAME = "GithubActionApp".freeze
+
+KEYCHAIN_NAME = "ios_app_keychain"
+KEYCHAIN_PASSWORD = ENV["KEYCHAIN_PASSWORD"]
+CERTIFICATE_PASSWORD = ENV["CERTIFICATE_PASSWORD"]
+DISTRIBUTION_CERTIFICATE_FILE_PATH = ENV["DISTRIBUTION_CERTIFICATE_FILE_PATH"]
+PROVISIONING_PROFILE_FILE_PATH = ENV["PROVISIONING_PROFILE_FILE_PATH"]
+FIREBASE_SERVICE_ACCOUNT_FILE_PATH = ENV["FIREBASE_SERVICE_ACCOUNT_FILE_PATH"]
+
+default_platform(:ios)
+
+# iOS用 Lane ---------------------
+platform :ios do
+  desc "Import Certificates and Provisioning Profile"
+  private_lane :import_certificates_and_provisioning_profile do
+    create_keychain(
+      name: KEYCHAIN_NAME,
+      password: KEYCHAIN_PASSWORD,
+      timeout: 1800,
+    )
+    import_certificate(
+      certificate_path: DISTRIBUTION_CERTIFICATE_FILE_PATH,
+      certificate_password: CERTIFICATE_PASSWORD,
+      keychain_name: KEYCHAIN_NAME,
+      keychain_password: KEYCHAIN_PASSWORD,
+    )
+    install_provisioning_profile(path: PROVISIONING_PROFILE_FILE_PATH)
+  end
+
+  desc "Distribute to Firebase App Distribution"
+  lane :firebase do |options|
+    import_certificates_and_provisioning_profile
+    new_version = get_version(options[:version])
+    new_build_number = get_build_number(options[:build_suffix], options[:build])
+    # バージョン設定
+    increment_version_number(version_number: new_version)
+    # ビルド番号設定
+    increment_build_number(build_number: new_build_number)
+
+    puts "\n\n"
+    puts_title("バージョン/ビルド番号変更完了", :purple)
+    puts "Version: #{colored(new_version, :green)}"
+    puts "Build number: #{colored(new_build_number, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+
+    # テスター設定
+    testers = options[:tester] || FIREBASE_TESTER::Nakashima
+    # リリースノート設定
+    release_notes = options[:release_notes] || "動作確認用"
+
+    build_app(
+      scheme: "GithubActionsApp",
+      configuration: "Release",
+      export_options: {
+        method: "ad-hoc",
+        provisioningProfiles: {
+          "com.clapp.githubactionapp" => "GithubActionApp",
+        },
+      },
+    )
+
+    puts "\n\n"
+    puts_title("ビルド完了", :purple)
+    puts_line(:purple)
+    puts "\n\n"
+
+    release = firebase_app_distribution(
+      app: FIREBASE_APP_ID,
+      groups: testers,
+      release_notes: release_notes,
+      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
+    )
+
+    puts "\n\n"
+    puts_title("Firebase配信完了", :purple)
+    puts "バージョン: #{colored(new_version, :green)}"
+    puts "ビルド番号: #{colored(new_build_number, :green)}"
+    puts "テスター: #{colored(testers, :green)}"
+    puts "リリースノート: #{colored(release_notes, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+  end
+
+  desc "Update app version and create PR"
+  lane :update_version_pr do |options|
+    import_certificates_and_provisioning_profile
+    ew_version = get_version(options[:version])
+    new_build_number = get_build_number(options[:build_suffix], options[:build])
+
+    # 現在チェックアウト中のブランチ名を保持
+    current_branche_name = (sh "git branch --show-current").strip
+
+    # アップデート用ブランチ作成、チェックアウト
+    new_branch_name = "feature/update-version-#{new_version}_#{new_build_number}"
+    check_exist_brance_result = sh "git branch --list #{new_branch_name}"
+    is_exist_brance = !check_exist_brance_result.nil? && !check_exist_brance_result.empty?
+    if is_exist_brance
+      sh "git switch #{new_branch_name}"
+      branch_action_title = "ブランチチェックアウト完了"
+    else
+      sh "git switch -c #{new_branch_name}"
+      branch_action_title = "ブランチ作成、チェックアウト完了"
+    end
+
+    puts "\n\n"
+    puts_title("#{branch_action_title}", :purple)
+    puts "Checkout #{colored(new_branch_name, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+
+    # バージョン設定
+    increment_version_number(version_number: new_version)
+
+    # ビルド番号設定
+    increment_build_number(build_number: new_build_number)
+
+    puts "\n\n"
+    puts_title("バージョン/ビルド番号変更完了", :purple)
+    puts "Version: #{colored(new_version, :green)}"
+    puts "Build number: #{colored(new_build_number, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+
+    # PR作成
+    pr_title = "バージョン#{new_version}_#{new_build_number}にアップデート"
+    # 変更があるかを確認
+    if sh("git status --porcelain #{VERSION_MANAGER_FIEL_PATH}").empty?
+      UI.message("No changes to commit.")
+    else
+      # 変更があればコミット
+      sh "git add #{VERSION_MANAGER_FIEL_PATH}"
+      sh("git commit -m '#{pr_title} (by Fastlane)'")
+    end
+    sh "git push origin #{new_branch_name}"
+
+    # PR作成
+    sh "gh pr create --title '#{pr_title}' --body 'Update version by Fastlane' --base #{current_branche_name} --head #{new_branch_name} --assignee @me"
+
+    puts "\n\n"
+    puts_title("PR作成完了", :purple)
+    puts "Merge commits into #{colored("origin/#{current_branche_name}", :green)} from #{colored(new_branch_name, :green)}"
+    puts "title: #{colored(pr_title, :green)}"
+    puts_line(:purple)
+    puts "\n\n"
+  end
+end
+
+# カスタムメソッド ---------------------
+def get_version(current_version)
+  if !current_version.nil? && !current_version.empty?
+    version = current_version
+  else
+    version = get_version_number
+  end
+
+  return version
+end
+
+def get_build_number(build_suffix, current_build_number)
+  if !current_build_number.nil? && !current_build_number.empty?
+    return current_build_number
+  end
+  # 今日の日付を取得 (形式: YYYYMMDD)
+  today_date = Time.now.strftime("%Y%m%d")
+  # 新ビルド番号を決める
+  latest_release = firebase_app_distribution_get_latest_release(
+    app: FIREBASE_APP_ID,
+    service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
+    debug: true,
+  )
+  latest_release_build_number = latest_release[:buildVersion]
+  latest_release_date = latest_release_build_number[0..7] # 日付部分
+  latest_release_build_suffix_number = latest_release_build_number[8..-1] # 日付部分を除いた数字を取得
+  if latest_release_date == today_date
+    build_suffix_number = build_suffix || latest_release_build_suffix_number.to_i + 1
+  end
+  build_number = "#{today_date}#{build_suffix_number}"
+
+  return build_number
+end
+
+def colored(text, color)
+  colors = {
+    red: "\e[31m",
+    green: "\e[32m",
+    yellow: "\e[33m",
+    blue: "\e[34m",
+    purple: "\e[35m",
+    cyan: "\e[36m",
+    white: "\e[37m",
+  }
+
+  # 色が指定されていない場合はデフォルトでリセット
+  color_code = colors[color] || "\e[0m"
+
+  # 色を適用してputs
+  return "#{color_code}#{text}\e[0m"
+end
+
+def puts_title(title = "", color = "white")
+  width = `tput cols`.to_i
+  puts colored("=" * (width * 0.8), color)
+  puts colored("    #{title}", color)
+  puts colored("=" * (width * 0.8), color)
+end
+
+def puts_line(color = "white")
+  width = `tput cols`.to_i
+  puts colored("=" * (width * 0.8), color)
+end

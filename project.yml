@@ -1,0 +1,32 @@
+name: GithubActionsApp
+options:
+  bundleIdPrefix: com.nakashima
+
+targets:
+  GithubActionsApp:
+    type: application
+    supportedDestinations: iOS
+    platform: iOS
+    sources:
+      - path: GithubActionsApp
+    info:
+      path: GithubActionsApp/Info.plist
+      properties:
+        CFBundleName: GithubActionsApp
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UISupportedInterfaceOrientations~iphone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UILaunchScreen: ""
+    dependencies:
+        - package: MyLibrary
+        - package: Alamofire
+
+packages:
+  MyLibrary:
+    path: ./MyLibrary
+  Alamofire:
+    url: https://github.com/Alamofire/Alamofire.git
+    from: 5.10.2

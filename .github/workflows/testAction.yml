@@ -2,6 +2,8 @@ name: Build and Distribute Debug IPA (iOS)
 
 on:
   push:
+    branches: ["staging" ]
+  pull_request:
     branches: [ "develop", "staging" ]
   workflow_dispatch:         # 手動実行も可能
     inputs:
@@ -19,37 +21,86 @@ on:
 
 env:
   XCODE_VERSION: '26.0.1'           # 使用するXcodeのバージョン
-  SCHEME: 'GithubActionsTest'        # Xcodeのビルド対象Scheme
+  SIMULATOR_NAME: 'iPhone 17'       # 使用するiPhoneシミュレーターの種類
+  SCHEME: 'GithubActionsApp'        # Xcodeのビルド対象Scheme
   CONFIGURATION: 'Debug'          # Debugビルドを指定
   EXPORT_METHOD: 'development'    # ipa出力方法(development / ad-hoc / app-storeなど)
+  DISTRIBUTION_CERTIFICATE_FILE_NAME: 'ios_distribution_certificate.p12'  # 配布用証明書のファイル名
+  PROVISIONING_PROFILE_FILE_NAME: 'ios_provisioning_profile.mobileprovision'  # プロビジョニングプロファイルのファイル名
+  FIREBASE_SERVICE_ACCOUNT_FILE_NAME: 'ios_firebase_service_account.json'  # Firebaseサービスアカウントファイル名
 
 jobs:
   distribute:
-    runs-on: macos-latest             # macOSランナー(Xcodeが使える環境)
+    runs-on: macos-latest
     timeout-minutes: 45
-    # environment: iOSDebug
 
     steps:
-    # ---------------------------------------------
-    # ① ソースコードをチェックアウト
-    # ---------------------------------------------
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.1
+        bundler-cache: true
+
+    - name: Bundle Install
+      run: bundle install
+
+    - name: Decode ios_distribution_certificate.p12
+      run: |
+        echo "${{ secrets.DISTRIBUTION_CERTIFICATE }}" > ${{ env.DISTRIBUTION_CERTIFICATE_FILE_NAME }}.txt
+        base64 --decode -i ${{ env.DISTRIBUTION_CERTIFICATE_FILE_NAME }}.txt -o ${{ env.DISTRIBUTION_CERTIFICATE_FILE_NAME }}
+
+    - name: Decode ios_provisioning_profile.mobileprovision
+      run: |
+        echo "${{ secrets.PROVISIONING_PROFILE }}" > ${{ env.PROVISIONING_PROFILE_FILE_NAME }}.txt
+        base64 --decode -i ${{ env.PROVISIONING_PROFILE_FILE_NAME }}.txt -o ${{ env.PROVISIONING_PROFILE_FILE_NAME }}
+
+    - name: Decode Firebase Service Account JSON file
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ env.FIREBASE_SERVICE_ACCOUNT_FILE_NAME }}.txt
+        base64 --decode -i ${{ env.FIREBASE_SERVICE_ACCOUNT_FILE_NAME }}.txt -o ${{ env.FIREBASE_SERVICE_ACCOUNT_FILE_NAME }}
 
     # ---------------------------------------------
-    # ② Xcodeバージョンを指定
+    # キャッシュする
+    # ---------------------------------------------
+    - name: Cache Swift Packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Developer/Xcode/DerivedData
+          ~/Library/Caches/org.swift.swiftpm
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+
+    # ---------------------------------------------
+    # Xcodeバージョンを指定
     # ---------------------------------------------
     - name: Set up Xcode
-      run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+      run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
 
     # ---------------------------------------------
-    # ③ ライブラリをインストール
+    # ライブラリをインストール
     # ---------------------------------------------
     - name: Resolve Swift Packages
       run: xcodebuild -resolvePackageDependencies -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug
 
     # ---------------------------------------------
-    # ④ ビルド
+    # ビルド
     # ---------------------------------------------
-    - name: Build app
-      run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=26.0.1'
+    # - name: Build app
+    #   run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination "platform=iOS Simulator,name=${{ env.SIMULATOR_NAME }}"
+
+    - name: Enterprise Build and App Distribution
+      env:
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        DISTRIBUTION_CERTIFICATE_FILE_PATH: "./${{ env.DISTRIBUTION_CERTIFICATE_FILE_NAME }}"
+        PROVISIONING_PROFILE_FILE_PATH: "./${{ env.PROVISIONING_PROFILE_FILE_NAME }}"
+        FIREBASE_SERVICE_ACCOUNT_FILE_PATH: "./${{ env.FIREBASE_SERVICE_ACCOUNT_FILE_NAME }}"
+        FASTLANE_OPT_OUT_USAGE: "YES"   # エラーを減らす
+        FASTLANE_VERBOSE: "true"
+      run: |
+        bundle exec fastlane firebase
