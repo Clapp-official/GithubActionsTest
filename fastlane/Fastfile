@@ -50,6 +50,8 @@ platform :ios do
   lane :firebase do |options|
     import_certificates_and_provisioning_profile
 
+    puts "firebase account: #{colored(FIREBASE_SERVICE_ACCOUNT_FILE_PATH, :blue)}"
+
     # 今日の日付を取得 (形式: YYYYMMDD)
     today_date = Time.now.strftime("%Y%m%d")
 
