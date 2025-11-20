@@ -43,6 +43,7 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: 3.4.2
+        bundler-cache: true
 
     - name: Bundle Install
       run: bundle install
@@ -50,12 +51,12 @@ jobs:
     - name: Keychain.p12
       run: |
         echo "${{ secrets.DISTRIBUTION_CERTIFICATE }}" > distribution.p12.txt
-        base64 --decode distribution.p12.txt > distribution.p12
+        base64 --decode -i distribution.p12.txt -o distribution.p12
 
     - name: ProvisioningProfile
       run: |
         echo "${{ secrets.PROVISIONING_PROFILE }}" > provisioning_profile.mobileprovision.txt
-        base64 --decode provisioning_profile.mobileprovision.txt > provisioning_profile.mobileprovision
+        base64 --decode -i provisioning_profile.mobileprovision.txt -o provisioning_profile.mobileprovision
 
     # ---------------------------------------------
     # キャッシュする
