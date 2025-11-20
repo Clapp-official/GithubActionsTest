@@ -54,8 +54,8 @@ platform :ios do
   desc "Distribute to Firebase App Distribution"
   lane :firebase do |options|
     import_certificates_and_provisioning_profile
-    new_version = new_version(options: options)
-    new_build_number = new_build_number(options: options)
+    new_version = get_new_version(options: options)
+    new_build_number = get_new_build_number(options: options)
     # バージョン設定
     increment_version_number(version_number: new_version)
     # ビルド番号設定
@@ -108,7 +108,7 @@ platform :ios do
 end
 
 desc "Determine new version"
-lane :new_version do |options|
+lane :get_new_version do |options|
   # 新バージョンを決める
   current_version = get_version_number
   if !options[:version].nil? && !options[:version].empty?
@@ -117,11 +117,11 @@ lane :new_version do |options|
     new_version = current_version
   end
 
-  new_version
+  return new_version
 end
 
 desc "Determine new build number"
-lane :new_build_number do |options|
+lane :get_new_build_number do |options|
   # 今日の日付を取得 (形式: YYYYMMDD)
   today_date = Time.now.strftime("%Y%m%d")
   # 新ビルド番号を決める
@@ -139,7 +139,7 @@ lane :new_build_number do |options|
   end
   new_build_number = options[:build] || "#{today_date}#{build_suffix_number}"
 
-  new_build_number
+  return new_build_number
 end
 
 desc "Distribute to Firebase App Distribution"
