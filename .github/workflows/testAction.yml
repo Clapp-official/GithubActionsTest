@@ -38,6 +38,24 @@ jobs:
     # ---------------------------------------------
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.4.2
+
+    - name: Bundle Install
+      run: bundle install
+
+    - name: Keychain.p12
+      run: |
+        echo "${{ secrets.DISTRIBUTION_CERTIFICATE }}" > distribution.p12.txt
+        base64 --decode distribution.p12.txt > distribution.p12
+
+    - name: ProvisioningProfile
+      run: |
+        echo "${{ secrets.PROVISIONING_PROFILE }}" > provisioning_profile.mobileprovision.txt
+        base64 --decode provisioning_profile.mobileprovision.txt > provisioning_profile.mobileprovision
 
     # ---------------------------------------------
     # キャッシュする
@@ -67,5 +85,14 @@ jobs:
     # ---------------------------------------------
     # ④ ビルド
     # ---------------------------------------------
-    - name: Build app
-      run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination "platform=iOS Simulator,name=${{ env.SIMULATOR_NAME }}"
+    # - name: Build app
+    #   run: xcodebuild -project ${{ env.SCHEME }}.xcodeproj -scheme ${{ env.SCHEME }} -configuration Debug -sdk iphonesimulator -destination "platform=iOS Simulator,name=${{ env.SIMULATOR_NAME }}"
+
+    - name: Enterprise Build and App Distribution
+      env:
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      run: |
+        npm install -g firebase-tools
+        bundle exec fastlane firebase
