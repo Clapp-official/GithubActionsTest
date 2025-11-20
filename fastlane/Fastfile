@@ -54,13 +54,8 @@ platform :ios do
   desc "Distribute to Firebase App Distribution"
   lane :firebase do |options|
     import_certificates_and_provisioning_profile
-    new_version = lane(:get_new_version) do
-      options
-    end
-
-    new_build_number = lane(:get_new_build_number) do
-      options
-    end
+    new_version = get_version(options[:version])
+    new_build_number = get_build_number(options[:build_suffix], options[:build])
     # バージョン設定
     increment_version_number(version_number: new_version)
     # ビルド番号設定
@@ -111,51 +106,11 @@ platform :ios do
     puts "\n\n"
   end
 
-  desc "Determine new version"
-  lane :get_new_version do |options|
-    # 新バージョンを決める
-    current_version = get_version_number
-    if !options[:version].nil? && !options[:version].empty?
-      new_version = options[:version]
-    else
-      new_version = current_version
-    end
-
-    new_version
-  end
-
-  desc "Determine new build number"
-  lane :get_new_build_number do |options|
-    # 今日の日付を取得 (形式: YYYYMMDD)
-    today_date = Time.now.strftime("%Y%m%d")
-    # 新ビルド番号を決める
-    build_suffix_number = options[:build_suffix] || "0"
-    latest_release = firebase_app_distribution_get_latest_release(
-      app: FIREBASE_APP_ID,
-      service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
-      debug: true,
-    )
-    latest_release_build_number = latest_release[:buildVersion]
-    latest_release_date = latest_release_build_number[0..7] # 日付部分
-    latest_release_build_suffix_number = latest_release_build_number[8..-1] # 日付部分を除いた数字を取得
-    if latest_release_date == today_date
-      build_suffix_number = latest_release_build_suffix_number.to_i + 1
-    end
-    new_build_number = options[:build] || "#{today_date}#{build_suffix_number}"
-
-    new_build_number
-  end
-
-  desc "Distribute to Firebase App Distribution"
+  desc "Update app version and create PR"
   lane :update_version_pr do |options|
     import_certificates_and_provisioning_profile
-    new_version = lane(:get_new_version) do
-      options
-    end
-
-    new_build_number = lane(:get_new_build_number) do
-      options
-    end
+    ew_version = get_version(options[:version])
+    new_build_number = get_build_number(options[:build_suffix], options[:build])
 
     # 現在チェックアウト中のブランチ名を保持
     current_branche_name = (sh "git branch --show-current").strip
@@ -216,6 +171,39 @@ platform :ios do
 end
 
 # カスタムメソッド ---------------------
+def get_version(current_version)
+  if !current_version.nil? && !current_version.empty?
+    version = current_version
+  else
+    version = get_version_number
+  end
+
+  return version
+end
+
+def get_build_number(build_suffix, current_build_number)
+  if !current_build_number.nil? && !current_build_number.empty?
+    return current_build_number
+  end
+  # 今日の日付を取得 (形式: YYYYMMDD)
+  today_date = Time.now.strftime("%Y%m%d")
+  # 新ビルド番号を決める
+  latest_release = firebase_app_distribution_get_latest_release(
+    app: FIREBASE_APP_ID,
+    service_credentials_file: FIREBASE_SERVICE_ACCOUNT_FILE_PATH,
+    debug: true,
+  )
+  latest_release_build_number = latest_release[:buildVersion]
+  latest_release_date = latest_release_build_number[0..7] # 日付部分
+  latest_release_build_suffix_number = latest_release_build_number[8..-1] # 日付部分を除いた数字を取得
+  if latest_release_date == today_date
+    build_suffix_number = build_suffix || latest_release_build_suffix_number.to_i + 1
+  end
+  build_number = "#{today_date}#{build_suffix_number}"
+
+  return build_number
+end
+
 def colored(text, color)
   colors = {
     red: "\e[31m",
